@@ -2,11 +2,12 @@
 import express, { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
-// import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 // import database connection
 import connectionPool from "../utils/db";
 // import validation
-import { ValidationUserModel } from "../middleware/validation-user";
+import { ValidationUserModel } from "../middleware/validation-register";
+import { ValidationLoginModel } from "../middleware/validation-login";
 
 const authRouter = Router();
 authRouter.use(express.json());
@@ -17,6 +18,11 @@ export interface UserModel {
   email: string;
   password: string;
   create_at?: Date;
+}
+
+interface LoginModel {
+  email: string;
+  password: string;
 }
 
 async function hashPassword(plainTextPassword: string): Promise<string> {
@@ -51,7 +57,16 @@ authRouter.post(
     userInfo.create_at = new Date();
 
     try {
-      const responce = await connectionPool.query(
+      const alreadyHasEmail = await connectionPool.query(
+        `select * from users where email= $1`,
+        [userInfo.email]
+      );
+      if (alreadyHasEmail.rows[0]) {
+        return res.status(404).json({
+          message: "This email is already registered.",
+        });
+      }
+      const response = await connectionPool.query(
         `insert into users(username,email,password,create_at) values($1,$2,$3,$4 ) returning *`,
         [
           userInfo.username,
@@ -63,9 +78,65 @@ authRouter.post(
 
       return res
         .status(200)
-        .json({ message: "User has been created successfully" });
+        .json({ message: "User has been created successfully." });
     } catch (err) {
-      return res.status(500).json({ message: "Internal Server Error" });
+      return res.status(500).json({ message: "Internal Server Error." });
+    }
+  }
+);
+
+// login
+authRouter.post(
+  "/login",
+  ValidationLoginModel,
+  async (req: Request, res: Response) => {
+    const loginModel: LoginModel = {
+      email: req.body.email,
+      password: req.body.password,
+    };
+
+    try {
+      const response = await connectionPool.query(
+        `select * from users where email= $1`,
+        [loginModel.email]
+      );
+      if (response.rows[0]) {
+        const userInfo: UserModel = response.rows[0];
+
+        const isValidPassword = await bcrypt.compare(
+          req.body.password,
+          userInfo.password
+        );
+        if (!isValidPassword) {
+          return res.status(401).json({
+            message: "Invalid password.",
+          });
+        }
+        const secretKey: string | undefined = process.env.SECRET_KEY;
+        if (secretKey === undefined) {
+          throw new Error("SECRET_KEY is not defined");
+        }
+        const token: string = jwt.sign(
+          {
+            id: userInfo.id,
+            username: userInfo.username,
+          },
+          secretKey,
+          {
+            expiresIn: "1h", //1 hour
+          }
+        );
+        return res.status(200).json({
+          message: "Login successfully.",
+          token,
+        });
+      } else {
+        return res.status(404).json({
+          message: "Not Found: Email not found.",
+        });
+      }
+    } catch (err) {
+      return res.status(500).json({ message: "Internal Server Error." });
     }
   }
 );

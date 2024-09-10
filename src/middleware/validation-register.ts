@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 
-function isValidEmail(email: string): boolean {
+export function isValidEmail(email: string): boolean {
   const filter = /^([a-zA-Z0-9_\.-]+)@([\da-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})$/;
   return filter.test(email);
 }
 
-function isValidPassword(password: string): boolean {
+export function isValidPassword(password: string): boolean {
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,15}$/;
   return regex.test(password);
 }
