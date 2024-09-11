@@ -120,6 +120,7 @@ authRouter.post(
           {
             id: userInfo.id,
             username: userInfo.username,
+            email: userInfo.email,
           },
           secretKey,
           {
