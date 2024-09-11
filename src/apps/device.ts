@@ -33,6 +33,20 @@ deviceRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// get all devices by id
+deviceRouter.get(":id", async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  try {
+    const result = await connectionPool.query(
+      "select * from devices where user_id =$1",
+      [userId]
+    );
+    res.send(result.rows);
+  } catch (err) {
+    res.send("Error" + err);
+  }
+});
+
 // add new device
 deviceRouter.post(
   "/",
