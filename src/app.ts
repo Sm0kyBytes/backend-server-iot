@@ -5,6 +5,7 @@ import "dotenv/config";
 
 // Router
 import authRouter from "./apps/auth";
+import deviceRouter from "./apps/device";
 
 async function App(): Promise<express.Express> {
   const app = express();
@@ -12,6 +13,7 @@ async function App(): Promise<express.Express> {
   app.use(cors());
   app.use(bodyParser.json());
   app.use("/users", authRouter);
+  app.use("/devices", deviceRouter);
 
   app.get("/", (req: Request, res: Response) => {
     res.status(200).send("Hello, TypeScript with Express!");
