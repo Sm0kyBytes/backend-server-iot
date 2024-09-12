@@ -108,7 +108,7 @@ authRouter.post(
           userInfo.password
         );
         if (!isValidPassword) {
-          return res.status(401).json({
+          return res.status(404).json({
             message: "Invalid password.",
           });
         }
