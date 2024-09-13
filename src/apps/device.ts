@@ -34,8 +34,10 @@ deviceRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // get all devices by id
-deviceRouter.get(":id", async (req: Request, res: Response) => {
-  const userId = req.params.id;
+deviceRouter.get("/user", async (req: Request, res: Response) => {
+  //User ID should be obtained from Tokens
+  const payload = req.body.user;
+  const userId = payload.id;
   try {
     const result = await connectionPool.query(
       "select * from devices where user_id =$1",
@@ -52,6 +54,9 @@ deviceRouter.post(
   "/",
   ValidationDeviceModel,
   async (req: Request, res: Response) => {
+    //User ID should be obtained from Tokens
+    const payload = req.body.user;
+    const userId = payload.id;
     const deviceInfo: deviceModel = {
       user_id: req.body.userId,
       device_name: req.body.deviceName,
@@ -75,7 +80,7 @@ deviceRouter.post(
       const response = await connectionPool.query(
         `insert into devices(user_id,deevice_name,description,category,create_at,update_at) values($1,$2,$3,$4,$5,$6 ) returning *`,
         [
-          deviceInfo.user_id,
+          userId,
           deviceInfo.device_name,
           deviceInfo.description,
           deviceInfo.category,
@@ -98,8 +103,9 @@ deviceRouter.put(
   ValidationDeviceModel,
   async (req: Request, res: Response) => {
     const deviceId = req.params.id;
-    console.log(deviceId);
-
+    //User ID should be obtained from Tokens
+    const payload = req.body.user;
+    const userId = payload.id;
     const deviceInfo: deviceModel = {
       user_id: req.body.userId,
       device_name: req.body.deviceName,
@@ -112,7 +118,7 @@ deviceRouter.put(
       const response = await connectionPool.query(
         `update devices set user_id=$1,deevice_name=$2,description=$3,category=$4,update_at=$5 where id=$6`,
         [
-          deviceInfo.user_id,
+          userId,
           deviceInfo.device_name,
           deviceInfo.description,
           deviceInfo.category,
